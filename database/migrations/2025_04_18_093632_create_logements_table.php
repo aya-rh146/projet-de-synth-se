@@ -10,19 +10,21 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {Schema::create('logements', function (Blueprint $table) {
-        $table->id('id_log');
-        $table->float('prix_log');
-        $table->string('localisation_log');
-        $table->date('date_creation_log');
-        $table->enum('type_log', ['studio', 'appartement', 'maison']);
-        $table->string('photo_log');
-        $table->integer('nombre_colocataire_log');
-        $table->string('ville');
-        $table->integer('views')->default(0);
-        $table->foreignId('proprietaire_id')->constrained('utilisateurs')->onDelete('cascade');
-        $table->timestamps();
-    });
+    {
+        Schema::create('logements', function (Blueprint $table) {
+            $table->id(); // Id unique pour chaque logement
+            $table->float('prix_log'); // Prix du logement
+            $table->string('localisation_log'); // Localisation géographique du logement
+            $table->date('date_creation_log'); // Date de création du logement
+            $table->enum('type_log', ['studio', 'appartement', 'maison']); // Type de logement (choix entre studio, appartement, maison)
+            $table->json('equipements')->nullable(); // Equipements du logement stockés au format JSON
+            $table->json('photos')->nullable(); // Photos du logement stockées au format JSON
+            $table->integer('etage')->nullable(); // Etage de l'immeuble (nullable si non applicable)
+            $table->integer('nombre_colocataire_log'); // Nombre de colocataires autorisés
+            $table->string('ville'); // Ville dans laquelle se trouve le logement
+            $table->integer('views')->default(0); // Nombre de vues du logement
+            $table->timestamps(); // Colonnes created_at et updated_at
+        });
     }
 
     /**
@@ -30,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('logements');
+        Schema::dropIfExists('logements'); // Supprime la table 'logements' si elle existe
     }
 };

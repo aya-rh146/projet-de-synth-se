@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('conversations', function (Blueprint $table) {
-            $table->id('id_conv');
+            $table->id();
             $table->date('date_debut_conv');
-            $table->unsignedBigInteger('expediteur_id');
-            $table->unsignedBigInteger('destinataire_id');
+            $table->foreignId('expediteur_id')->constrained('utilisateurs')->onDelete('cascade');
+            $table->foreignId('destinataire_id')->constrained('utilisateurs')->onDelete('cascade');
             $table->timestamps();
         });
     }

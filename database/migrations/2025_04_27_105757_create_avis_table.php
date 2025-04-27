@@ -11,8 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('proprietaires', function (Blueprint $table) {
+        Schema::create('avis', function (Blueprint $table)
+         {
             $table->id();
+            $table->text('contenu');
+            $table->integer('note');
+            $table->foreignId('annonce_id')->constrained()->onDelete('cascade');
+            $table->foreignId('locataire_id')->constrained('utilisateurs')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -22,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('proprietaires');
+        Schema::dropIfExists('avis');
     }
 };

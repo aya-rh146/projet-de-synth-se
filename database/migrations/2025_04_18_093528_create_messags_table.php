@@ -10,11 +10,11 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {Schema::create('messages', function (Blueprint $table) {
-        $table->id('id_mess');
+    {Schema::create('messags', function (Blueprint $table) {
+        $table->id();
         $table->text('contenu_mess');
         $table->date('date_mess');
-        $table->foreignId('conversation_id')->constrained('conversations')->onDelete('cascade');
+        $table->foreignId('conversation_id')->constrained()->onDelete('cascade');
         $table->timestamps();
     });
     }

@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {Schema::create('favoris', function (Blueprint $table) {
-        $table->id('id_fav');
-        $table->foreignId('utilisateur_id')->constrained('utilisateurs')->onDelete('cascade');  // Clé étrangère vers utilisateurs (locataire ou colocataire)
+        $table->id();
+        $table->foreignId('locataire_id')->constrained('utilisateurs')->onDelete('cascade');  // Clé étrangère vers utilisateurs (locataire ou colocataire)
         $table->foreignId('annonce_id')->constrained('annonces')->onDelete('cascade');  // Clé étrangère vers annonces
         $table->date('date_d_ajout_fav');
         $table->timestamps();

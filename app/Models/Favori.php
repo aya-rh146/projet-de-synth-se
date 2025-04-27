@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 
-class Avis extends Model
-{
+class Favori extends Model
+{ 
     use HasFactory ;
     protected $fillable = [
-        'contenu', 'note', 'annonce_id', 'locataire_id'
-
+        'date_d_ajout_fav','locataire_id','annonce_id'
     ];
     public function annonce (){
         $this->belongsTo(Annonce::class);
