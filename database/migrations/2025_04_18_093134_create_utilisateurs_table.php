@@ -15,7 +15,7 @@ return new class extends Migration
         $table->string('nom_uti');
         $table->string('prenom');
         $table->string('email_uti')->unique();
-        $table->string('mot_de_passe_uti');
+        $table->string('mot_de_passe_uti',300);
         $table->enum('role_uti', ['locataire', 'colocataire', 'proprietaire', 'admin']);
         $table->string('photodeprofil_uti')->nullable();
         $table->string('tel_uti');

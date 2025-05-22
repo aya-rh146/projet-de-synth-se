@@ -1,27 +1,40 @@
 <?php
 
 namespace App\Models;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Annonce extends Model
 {
-    use HasFactory ;
+    use HasFactory;
+
     protected $fillable = [
-        'titre_anno', 'description_anno', 'statut_anno',
-        'date_publication_anno', 'logement_id', 'proprietaire_id'
+        'titre_anno',
+        'description_anno',
+        'statut_anno',
+        'date_publication_anno',
+        'logement_id',
+        'proprietaire_id',
     ];
-    public function Logements(){
-        $this->belongsTo(Logement::class);
+
+    public function logement()
+    {
+        return $this->belongsTo(Logement::class, 'logement_id');
     }
-    public function Utilisateurs(){
-        $this->belongsTo(Utilisateur::class);
+
+    public function utilisateur()
+    {
+        return $this->belongsTo(Utilisateur::class, 'proprietaire_id');
     }
-    public function Avis (){
-        $this->hasMany(Avis::class);
+
+    public function avis()
+    {
+        return $this->hasMany(Avis::class);
     }
-    public function Favori (){
-        $this->hasMany(Favori::class);
+
+    public function favori()
+    {
+        return $this->hasMany(Favori::class);
     }
 }

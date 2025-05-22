@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('titre_anno');
             $table->text('description_anno');
-            $table->string('statut_anno');
+            $table->string('statut_anno')->default('disponible');
             $table->date('date_publication_anno');
             $table->foreignId('logement_id')->constrained('logements')->onDelete('cascade');
             $table->foreignId('proprietaire_id')->constrained('utilisateurs')->onDelete('cascade');
+            //$table->foreignId('proprietaire_id')->nullable()->constrained('utilisateurs')->onDelete('set null');
             $table->timestamps();
         });
     }
