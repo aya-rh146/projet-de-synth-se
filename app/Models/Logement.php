@@ -11,10 +11,12 @@ class Logement extends Model
     use HasFactory ; 
     protected $fillable = [
         'prix_log','localisation_log', 'date_creation_log',
-        'type_log','equipements', 'photos','etage', 'nombre_colocataire_log',
+        'type_log','equipements', 'photos',
+        'etage', 'nombre_colocataire_log',
         'ville', 'views'
     ];
     protected $casts = [
+        'equipements' => 'array',
         'photos' => 'array', // باش Laravel يعرف بلي photos هو array
     ];
 
@@ -23,7 +25,7 @@ class Logement extends Model
         return $this->hasMany(Reservation::class);
     }
     public function Annonce(){
-        $this->hasMany(Annonce::class, 'logement_id');
+        return $this->hasMany(Annonce::class, 'logement_id');
     }
 
 

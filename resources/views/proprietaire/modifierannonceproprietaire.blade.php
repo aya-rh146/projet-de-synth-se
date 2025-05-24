@@ -1,165 +1,153 @@
 @extends('layouts.app')
 
 @section('content')
+
 <div class="container mx-auto mt-10">
     <div class="bg-white shadow-md rounded-lg p-8 mb-10">
-        <h2 class="text-2xl font-bold text-center text-gray-700 mb-8">Modifier l'annonce : {{ $annonce->titre_anno }}</h2>
+        <h2 class="text-2xl font-bold text-center text-gray-700 mb-8">Modifier une annonce</h2>
 
-        <form id="edit-annonce-form" enctype="multipart/form-data">
+        @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-5">
+            {{ session('success') }}
+        </div>
+        @endif
+        @if(session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-5">
+            {{ session('error') }}
+        </div>
+        @endif
+
+        <form action="{{ route('proprietaire.annoncesproprietaire.update', $annonce->id) }}" method="POST" enctype="multipart/form-data" id="form-annonce-proprietaire">
             @csrf
             @method('PUT')
-            <input type="hidden" name="annonce_id" value="{{ $annonce->id }}">
 
             <div class="grid grid-cols-1 gap-6">
+
+                {{-- Photos --}}
                 <div>
-                    <label for="photos_proprietaire" class="block mb-2 font-semibold text-gray-700">Photos :</label>
-                    <input type="file" name="photos" id="photos_proprietaire" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" accept="image/jpeg,image/png,image/jpg">
-                    @if($annonce->photos)
-                        <img src="{{ asset('storage/' . $annonce->photos) }}" alt="Photo actuelle" class="w-32 h-32 object-cover mt-2" style="border-radius: 10px;">
+                    <label for="photos_proprietaire" class="block mb-2 font-semibold text-gray-700">Photos (plusieurs possibles)</label>
+                    <input type="file" name="photos[]" id="photos_proprietaire" multiple accept="image/jpeg,image/png,image/jpg" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200 file:bg-blue-600 file:text-white file:font-semibold file:px-4 file:py-2 file:rounded file:border-0 file:cursor-pointer">
+                    @error('photos.*')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                    @error('photos')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                    @if($annonce->logement->photos)
+                        <div class="mt-2">
+                            @foreach(json_decode($annonce->logement->photos, true) as $photo)
+                                <img src="{{ asset($photo) }}" width="100" class="img-thumbnail mr-2">
+                            @endforeach
+                        </div>
                     @endif
                 </div>
 
+                {{-- Titre --}}
                 <div>
                     <label for="titre_anno_proprietaire" class="block mb-2 font-semibold text-gray-700">Titre</label>
-                    <input type="text" name="titre_anno" id="titre_anno_proprietaire" value="{{ old('titre_anno', $annonce->titre_anno) }}" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" required>
+                    <input type="text" name="titre_anno" id="titre_anno_proprietaire" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" value="{{ old('titre_anno', $annonce->titre_anno) }}" required>
+                    @error('titre_anno')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
+                {{-- Prix --}}
                 <div>
-                    <label for="budget_proprietaire" class="block mb-2 font-semibold text-gray-700">Prix</label>
-                    <input type="number" name="budget" id="budget_proprietaire" value="{{ old('budget', $annonce->budget) }}" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" required>
+                    <label for="prix_log_proprietaire" class="block mb-2 font-semibold text-gray-700">Prix</label>
+                    <input type="number" name="prix_log" id="prix_log_proprietaire" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" value="{{ old('prix_log', $annonce->logement->prix_log) }}" required>
+                    @error('prix_log')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
+                {{-- Localisation --}}
                 <div>
-                    <label for="localisation_proprietaire" class="block mb-2 font-semibold text-gray-700">Localisation</label>
-                    <input type="text" name="localisation" id="localisation_proprietaire" value="{{ old('localisation', $annonce->localisation) }}" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" required>
+                    <label for="localisation_log_proprietaire" class="block mb-2 font-semibold text-gray-700">Localisation</label>
+                    <input type="text" name="localisation_log" id="localisation_log_proprietaire" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" value="{{ old('localisation_log', $annonce->logement->localisation_log) }}" required>
+                    @error('localisation_log')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
+                {{-- Équipements --}}
                 <div>
-                    <label class="block mb-2 font-semibold text-gray-700">Équipement</label>
+                    <label class="block mb-2 font-semibold text-gray-700">Équipements</label>
                     <div class="grid grid-cols-2 gap-2">
-                        @php
-                            $equipements = json_decode($annonce->equipement, true) ?? [];
-                        @endphp
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Wi-Fi" {{ in_array('Wi-Fi', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Wi-Fi" class="form-checkbox" {{ in_array('Wi-Fi', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Wi-Fi</span>
                             </label>
                         </div>
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Climatisation/Chauffage" {{ in_array('Climatisation/Chauffage', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Climatisation/Chauffage" class="form-checkbox" {{ in_array('Climatisation/Chauffage', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Climatisation/Chauffage</span>
                             </label>
                         </div>
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Télévision" {{ in_array('Télévision', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Télévision" class="form-checkbox" {{ in_array('Télévision', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Télévision</span>
                             </label>
                         </div>
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Machine à laver" {{ in_array('Machine à laver', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Machine à laver" class="form-checkbox" {{ in_array('Machine à laver', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Machine à laver</span>
                             </label>
                         </div>
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Cuisine équipée" {{ in_array('Cuisine équipée', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Cuisine équipée" class="form-checkbox" {{ in_array('Cuisine équipée', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Cuisine équipée</span>
                             </label>
                         </div>
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Réfrigérateur" {{ in_array('Réfrigérateur', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Réfrigérateur" class="form-checkbox" {{ in_array('Réfrigérateur', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Réfrigérateur</span>
                             </label>
                         </div>
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Douche/Baignoire" {{ in_array('Douche/Baignoire', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Douche/Baignoire" class="form-checkbox" {{ in_array('Douche/Baignoire', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Douche/Baignoire</span>
                             </label>
                         </div>
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Parking" {{ in_array('Parking', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Parking" class="form-checkbox" {{ in_array('Parking', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Parking</span>
                             </label>
                         </div>
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Draps et serviettes fournies" {{ in_array('Draps et serviettes fournies', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Draps et serviettes fournies" class="form-checkbox" {{ in_array('Draps et serviettes fournies', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Draps et serviettes fournies</span>
                             </label>
                         </div>
                         <div>
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipement[]" value="Balcon/Terrasse" {{ in_array('Balcon/Terrasse', $equipements) ? 'checked' : '' }} class="form-checkbox">
+                                <input type="checkbox" name="equipements[]" value="Balcon/Terrasse" class="form-checkbox" {{ in_array('Balcon/Terrasse', old('equipements', json_decode($annonce->logement->equipements ?? '[]', true))) ? 'checked' : '' }}>
                                 <span class="ml-2">Balcon/Terrasse</span>
                             </label>
                         </div>
                     </div>
+                    @error('equipements')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
+
             </div>
 
             <div class="flex justify-center mt-8">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded">
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-8 rounded">
                     Mettre à jour l'annonce
                 </button>
-                <a href="{{ route('proprietaire.annoncesproprietaire.index') }}" class="ml-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-8 rounded text-center inline-block">
-                    Annuler
-                </a>
             </div>
         </form>
     </div>
 </div>
+
 @endsection
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script>
-    document.getElementById('edit-annonce-form').addEventListener('submit', async function(event) {
-        event.preventDefault();
-
-        const form = event.target;
-        const formData = new FormData(form);
-        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        try {
-            const response = await axios.put(`/proprietaire/annonces/${form.querySelector('input[name="annonce_id"]').value}`, formData, {
-                headers: {
-                    'X-CSRF-TOKEN': token,
-                    'Content-Type': 'multipart/form-data',
-                }
-            });
-
-            const json = response.data;
-
-            if (json.success) {
-                alert(json.message);
-                window.location.href = '{{ route('proprietaire.annoncesproprietaire.index') }}';
-            } else {
-                alert('Erreur: ' + json.message);
-            }
-
-        } catch (error) {
-            console.error('Erreur:', error);
-            if (error.response) {
-                const status = error.response.status;
-                const data = error.response.data;
-                let errorMessage = `Erreur ${status}: `;
-                if (status === 422) {
-                    errorMessage += Object.values(data.errors || {}).flat().join('\n') || data.message;
-                } else {
-                    errorMessage += data.message || 'Problème de connexion ou serveur.';
-                }
-                alert(errorMessage);
-            } else {
-                alert('Erreur: Vérifiez la console pour plus de détails.');
-            }
-        }
-    });
-</script>
-@endpush

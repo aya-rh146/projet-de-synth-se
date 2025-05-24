@@ -6,162 +6,134 @@
 
     {{-- Message succès --}}
     @if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-5">
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
 
-    {{-- Formulaire: Propriétaire (بالضبط بحال الصورة) --}}
-    <div class="bg-white shadow-md rounded-lg p-8 mb-10">
-        <h2 class="text-2xl font-bold text-center text-gray-700 mb-8">Créer une annonce :</h2>
+    {{-- Message erreur --}}
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
 
-        <form action="{{ route('proprietaire.annoncesproprietaire.store') }}" method="POST" enctype="multipart/form-data" id="form-annonce-proprietaire">
-            @csrf
+    {{-- Formulaire: Propriétaire --}}
+    <div class="card shadow-md rounded-lg mb-5">
+        <div class="card-body p-5">
+            <h2 class="text-center mb-4 fw-bold text-primary">Créer une annonce :</h2>
 
-            <div class="grid grid-cols-1 gap-6">
+            <form action="{{ route('proprietaire.annoncesproprietaire.store') }}" method="POST" enctype="multipart/form-data" id="form-annonce-proprietaire">
+                @csrf
 
-                {{-- ✅ رفع الصور --}}
-                <div>
-                    <label for="photos_proprietaire" class="block mb-2 font-semibold text-gray-700">Photos (plusieurs possibles)</label>
-                    <input type="file" name="photos[]" id="photos_proprietaire" multiple accept="image/jpeg,image/png,image/jpg" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200 file:bg-blue-600 file:text-white file:font-semibold file:px-4 file:py-2 file:rounded file:border-0 file:cursor-pointer">
+                <div class="mb-3">
+                    <label for="photos_proprietaire" class="form-label fw-semibold">Photos (plusieurs possibles)</label>
+                    <input type="file" name="photos[]" id="photos_proprietaire" multiple accept="image/jpeg,image/png,image/jpg" class="form-control">
                     @error('photos.*')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        <small class="text-danger">{{ $message }}</small>
                     @enderror
                     @error('photos')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        <small class="text-danger">{{ $message }}</small>
                     @enderror
                 </div>
 
-
-                <div>
-                    <label for="titre_anno_proprietaire" class="block mb-2 font-semibold text-gray-700">Titre</label>
-                    <input type="text" name="titre_anno" id="titre_anno_proprietaire" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" required>
+                <div class="mb-3">
+                    <label for="titre_anno_proprietaire" class="form-label fw-semibold">Titre</label>
+                    <input type="text" name="titre_anno" id="titre_anno_proprietaire" class="form-control" value="{{ old('titre_anno') }}" required>
+                    @error('titre_anno')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
                 </div>
 
-                <div>
-                    <label for="prix_log_proprietaire" class="block mb-2 font-semibold text-gray-700">Prix</label>
-                    <input type="number" name="prix_log" id="prix_log_proprietaire" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" required>
+                <div class="mb-3">
+                    <label for="prix_log_proprietaire" class="form-label fw-semibold">Prix</label>
+                    <input type="number" name="prix_log" id="prix_log_proprietaire" class="form-control" value="{{ old('prix_log') }}" required>
+                    @error('prix_log')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
                 </div>
 
-                <div>
-                    <label for="localisation_log_proprietaire" class="block mb-2 font-semibold text-gray-700">localisation</label>
-                    <input type="text" name="localisation_log" id="localisation_log_proprietaire" class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200" required>
+                <div class="mb-3">
+                    <label for="localisation_log_proprietaire" class="form-label fw-semibold">Localisation</label>
+                    <input type="text" name="localisation_log" id="localisation_log_proprietaire" class="form-control" value="{{ old('localisation_log') }}" required>
+                    @error('localisation_log')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
                 </div>
 
-                <div>
-                    <label class="block mb-2 font-semibold text-gray-700">Équipement</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Wi-Fi" class="form-checkbox">
-                                <span class="ml-2">Wi-Fi</span>
-                            </label>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Équipements</label>
+                    <div class="row">
+                        @foreach(['Wi-Fi', 'Climatisation/Chauffage', 'Télévision', 'Machine à laver', 'Cuisine équipée', 'Réfrigérateur', 'Douche/Baignoire', 'Parking', 'Draps et serviettes fournies', 'Balcon/Terrasse'] as $equipement)
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input type="checkbox" name="equipements[]" value="{{ $equipement }}" class="form-check-input" {{ in_array($equipement, old('equipements', [])) ? 'checked' : '' }}>
+                                <label class="form-check-label">{{ $equipement }}</label>
+                            </div>
                         </div>
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Climatisation/Chauffage" class="form-checkbox">
-                                <span class="ml-2">Climatisation/Chauffage</span>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Télévision" class="form-checkbox">
-                                <span class="ml-2">Télévision</span>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Machine à laver" class="form-checkbox">
-                                <span class="ml-2">Machine à laver</span>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Cuisine équipée" class="form-checkbox">
-                                <span class="ml-2">Cuisine équipée</span>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Réfrigérateur" class="form-checkbox">
-                                <span class="ml-2">Réfrigérateur</span>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Douche/Baignoire" class="form-checkbox">
-                                <span class="ml-2">Douche/Baignoire</span>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Parking" class="form-checkbox">
-                                <span class="ml-2">Parking</span>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Draps et serviettes fournies" class="form-checkbox">
-                                <span class="ml-2">Draps et serviettes fournies</span>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="equipements[]" value="Balcon/Terrasse" class="form-checkbox">
-                                <span class="ml-2">Balcon/Terrasse</span>
-                            </label>
-                        </div>
+                        @endforeach
                     </div>
+                    @error('equipements')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
                 </div>
 
-            </div>
-
-            <div class="flex justify-center mt-8">
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-8 rounded">
-                    Créer le logement
-                </button>
-            </div>
-
-        </form>
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">Créer le logement</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     {{-- Liste des annonces --}}
-    <h2 class="text-center mb-5" style="font-size: 28px; font-weight: bold; color: #2c3e50;">Liste des annonces</h2>
+    <h2 class="text-center mb-5 fw-bold text-primary" style="font-size: 28px;">Liste des annonces</h2>
 
     <div class="container">
-        <div class="row">
+        <div class="row" id="annonces-container">
             @isset($annonces)
             @forelse ($annonces as $annonce)
             <div class="col-md-4 mb-4 d-flex align-items-stretch">
-                <div class="card h-100 shadow-sm border-0 w-100" style="border-radius: 10px;">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title fw-bold fs-4 mb-3">{{ $annonce->titre_anno }}</h5>
-                            <p class="mb-1"><strong>💰 Prix:</strong> {{ $annonce->prix_log }} DH/mois</p>
-                            <p class="mb-1"><strong>📍 localisation_log:</strong> {{ $annonce->localisation_log }}</p>
-                            <p class="mb-1"><strong>🟢 Statut:</strong> En ligne</p>
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 10px;">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold fs-4 mb-3 text-lowercase">{{ $annonce->titre_anno }}</h5>
+                        @if($annonce->logement && $annonce->logement->photos)
+                            <div class="mb-3">
+                                @php
+                                    $photos = json_decode($annonce->logement->photos, true);
+                                    $firstPhoto = $photos[0] ?? null;
+                                @endphp
+                                @if($firstPhoto)
+                                    <img src="{{ asset($firstPhoto) }}" alt="Photo de l'annonce" class="rounded w-100" style="height: 150px; object-fit: cover;">
+                                @endif
+                            </div>
+                        @else
+                            <p class="text-muted mb-3">Aucune photo disponible</p>
+                        @endif
+                        <div class="mb-3">
+                            <p class="mb-1"><span class="me-2">💰</span><strong>Prix:</strong> {{ $annonce->logement->prix_log }} DH/mois</p>
+                            <p class="mb-1"><span class="me-2">📍</span><strong>Localisation:</strong> {{ $annonce->logement->localisation_log }}</p>
+                            <p class="mb-1"><span class="me-2">🟢</span><strong>Statut:</strong> {{ ucfirst($annonce->statut_anno) }}</p>
                             @if($annonce->date_publication_anno)
-                            <p class="mb-1"><strong>🗓 Publiée le:</strong> {{ \Carbon\Carbon::parse($annonce->date_publication_anno)->format('d F Y') }}</p>
+                            <p class="mb-1"><span class="me-2">🗓</span><strong>Publiée le:</strong> {{ \Carbon\Carbon::parse($annonce->date_publication_anno)->format('d F Y') }}</p>
                             @endif
-                            @if($annonce->nombre_colocataires)
-                            <p class="mb-1"><strong>👥 Nombre de colocataires:</strong> {{ $annonce->nombre_colocataires }}</p>
-                            @endif
-                            @if($annonce->equipements)
-                            <p class="mb-1"><strong>🛠 Équipement:</strong> {{ implode(', ', json_decode($annonce->equipements, true)) }}</p>
+                            @if($annonce->logement->equipements)
+                            <p class="mb-1"><span class="me-2">🛠</span><strong>Équipements:</strong> {{ implode(', ', json_decode($annonce->logement->equipements, true)) }}</p>
                             @endif
                         </div>
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{{ route('proprietaire.editannonce', $annonce->id) }}" class="btn text-dark fw-bold px-3" style="background-color: #EBDFD5;">
+                        <div class="d-flex justify-content-between mt-auto">
+                            <a href="{{ route('proprietaire.modifierannonceproprietaire', $annonce->id) }}" class="btn text-dark fw-bold px-3 flex-fill mx-1" style="background-color: #EBDFD5;">
                                 Modifier
                             </a>
-                            <form action="{{ route('proprietaire.annoncesproprietaire.destroy', $annonce->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression?');">
+                            <form action="{{ route('proprietaire.annoncesproprietaire.destroy', $annonce->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression?');" class="flex-fill mx-1">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn text-dark fw-bold px-3" style="background-color: #EBDFD5;">
+                                <button type="submit" class="btn text-dark fw-bold px-3 w-100" style="background-color: #EBDFD5;">
                                     Supprimer
                                 </button>
                             </form>
-                            <a href="#" class="btn text-dark fw-bold px-3" style="background-color: #EBDFD5;">
+                            <a href="#" class="btn text-dark fw-bold px-3 flex-fill mx-1" style="background-color: #EBDFD5;">
                                 Gérer demandes
                             </a>
                         </div>
@@ -174,16 +146,33 @@
             @endisset
         </div>
 
-        {{-- Pagination --}}
-        <div class="mt-5">
-            {{ $annonces->links() }}
+        {{-- ✅ Pagination مخصصة --}}
+        @if($annonces->hasPages())
+        <div class="mt-5 text-center">
+            <nav aria-label="Pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {{ $annonces->onFirstPage() ? 'disabled' : '' }}">
+                        <a class="page-link" href="{{ $annonces->previousPageUrl() }}">Précédent</a>
+                    </li>
+                    @foreach($annonces->getUrlRange(1, $annonces->lastPage()) as $page => $url)
+                    <li class="page-item {{ $page == $annonces->currentPage() ? 'active' : '' }}">
+                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                    </li>
+                    @endforeach
+                    <li class="page-item {{ $annonces->hasMorePages() ? '' : 'disabled' }}">
+                        <a class="page-link" href="{{ $annonces->nextPageUrl() }}">Suivant</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
+        @endif
     </div>
 
 </div>
 
 @endsection
 
+@section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('form-annonce-proprietaire');
@@ -210,32 +199,38 @@
                 const json = response.data;
 
                 if (json.success) {
-                    const equipementsList = json.annonce.equipements ? JSON.parse(json.annonce.equipements).join(', ') : '';
+                    const equipementsList = json.annonce.logement.equipements ? JSON.parse(json.annonce.logement.equipements).join(', ') : '';
+                    const photosList = json.annonce.logement.photos ? JSON.parse(json.annonce.logement.photos) : [];
+                    const firstPhoto = photosList[0] || null;
+                    const photosHtml = firstPhoto
+                        ? `<div class="mb-3"><img src="/${firstPhoto}" alt="Photo de l'annonce" class="rounded w-100" style="height: 150px; object-fit: cover;"></div>`
+                        : `<p class="text-muted mb-3">Aucune photo disponible</p>`;
+
                     const newCard = `
                         <div class="col-md-4 mb-4 d-flex align-items-stretch">
-                            <div class="card h-100 shadow-sm border-0 w-100" style="border-radius: 10px;">
-                                <div class="card-body d-flex flex-column justify-content-between">
-                                    <div>
-                                        <h5 class="card-title fw-bold fs-4 mb-3">${json.annonce.titre_anno}</h5>
-                                        <p class="mb-1"><strong>💰 Prix:</strong> ${json.annonce.prix_log} DH/mois</p>
-                                        <p class="mb-1"><strong>📍 localisation_log:</strong> ${json.annonce.localisation_log}</p>
-                                        <p class="mb-1"><strong>🟢 Statut:</strong> En ligne</p>
-                                        ${json.annonce.date_publication_anno ? `<p class="mb-1"><strong>🗓 Publiée le:</strong> ${new Date(json.annonce.date_publication_anno).toLocaleDateString('fr-FR')}</p>` : ''}
-                                        ${json.annonce.nombre_colocataires ? `<p class="mb-1"><strong>👥 Nombre de colocataires:</strong> ${json.annonce.nombre_colocataires}</p>` : ''}
-                                        ${equipementsList ? `<p class="mb-1"><strong>🛠 Équipement:</strong> ${equipementsList}</p>` : ''}
+                            <div class="card h-100 shadow-sm border-0" style="border-radius: 10px;">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title fw-bold fs-4 mb-3 text-lowercase">${json.annonce.titre_anno}</h5>
+                                    ${photosHtml}
+                                    <div class="mb-3">
+                                        <p class="mb-1"><span class="me-2">💰</span><strong>Prix:</strong> ${json.annonce.logement.prix_log} DH/mois</p>
+                                        <p class="mb-1"><span class="me-2">📍</span><strong>Localisation:</strong> ${json.annonce.logement.localisation_log}</p>
+                                        <p class="mb-1"><span class="me-2">🟢</span><strong>Statut:</strong> ${json.annonce.statut_anno.charAt(0).toUpperCase() + json.annonce.statut_anno.slice(1)}</p>
+                                        ${json.annonce.date_publication_anno ? `<p class="mb-1"><span class="me-2">🗓</span><strong>Publiée le:</strong> ${new Date(json.annonce.date_publication_anno).toLocaleDateString('fr-FR')}</p>` : ''}
+                                        ${equipementsList ? `<p class="mb-1"><span class="me-2">🛠</span><strong>Équipements:</strong> ${equipementsList}</p>` : ''}
                                     </div>
-                                    <div class="d-flex justify-content-between mt-4">
-                                        <a href="{{ route('proprietaire.modifierannonceproprietaire', ':id') }}".replace(':id', json.annonce.id)" class="btn text-dark fw-bold px-3" style="background-color: #EBDFD5;">
+                                    <div class="d-flex justify-content-between mt-auto">
+                                        <a href="{{ route('proprietaire.modifierannonceproprietaire', ':id') }}".replace(':id', json.annonce.id)" class="btn text-dark fw-bold px-3 flex-fill mx-1" style="background-color: #EBDFD5;">
                                             Modifier
                                         </a>
-                                        <form action="{{ route('proprietaire.annoncesproprietaire.destroy', ':id') }}".replace(':id', json.annonce.id)" method="POST" onsubmit="return confirm('Confirmer la suppression?');">
+                                        <form action="{{ route('proprietaire.annoncesproprietaire.destroy', ':id') }}".replace(':id', json.annonce.id)" method="POST" onsubmit="return confirm('Confirmer la suppression?');" class="flex-fill mx-1">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn text-dark fw-bold px-3" style="background-color: #EBDFD5;">
+                                            <button type="submit" class="btn text-dark fw-bold px-3 w-100" style="background-color: #EBDFD5;">
                                                 Supprimer
                                             </button>
                                         </form>
-                                        <a href="#" class="btn text-dark fw-bold px-3" style="background-color: #EBDFD5;">
+                                        <a href="#" class="btn text-dark fw-bold px-3 flex-fill mx-1" style="background-color: #EBDFD5;">
                                             Gérer demandes
                                         </a>
                                     </div>
@@ -244,15 +239,20 @@
                         </div>
                     `;
 
-                    const annoncesContainer = document.querySelector('.row');
+                    const annoncesContainer = document.querySelector('#annonces-container');
                     if (annoncesContainer) {
                         annoncesContainer.insertAdjacentHTML('afterbegin', newCard);
                     } else {
-                        console.error('Conteneur .row introuvable');
+                        console.error('Conteneur #annonces-container introuvable');
                     }
 
                     form.reset();
                     alert(json.message || 'Annonce créée avec succès !');
+
+                    // ✅ تحديث الصفحة باش الـ pagination تتحدث
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 } else {
                     alert('Erreur: ' + json.message);
                 }
@@ -276,3 +276,4 @@
         });
     });
 </script>
+@endsection

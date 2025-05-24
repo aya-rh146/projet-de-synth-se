@@ -20,8 +20,7 @@ return new class extends Migration
             $table->json('equipements')->nullable(); // Equipements du logement stockés au format JSON
             $table->json('photos')->nullable(); // Photos du logement stockées au format JSON
             $table->integer('etage')->nullable(); // Etage de l'immeuble (nullable si non applicable)
-            $table->integer('nombre_colocataire_log'); // Nombre de colocataires autorisés
-            $table->string('ville'); // Ville dans laquelle se trouve le logement
+            $table->integer('nombre_colocataire_log')->default(1);            $table->string('ville'); // Ville dans laquelle se trouve le logement
             $table->integer('views')->default(0); // Nombre de vues du logement
             $table->timestamps(); // Colonnes created_at et updated_at
         });

@@ -29,23 +29,19 @@
 
 <!-- Activité de vos réservations -->
 <section class="container mx-auto mb-16">
-    <h2 class="text-4xl font-bold mb-4">Accueil {{ Auth::user()->name ?? 'Ahmed Bekaoui' }}</h2>
+    <h2 class="text-4xl font-bold mb-4">Accueil {{ $user->nom_uti }} {{ $user->prenom }}</h2>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="bg-white p-6 rounded-lg shadow">
-            <p class="text-gray-500 mb-2">Nombre de mes réservations</p>
-            <p class="text-xl font-bold">25 demandes</p>
+            <p class="text-gray-500 mb-2">Réservations reçues</p>
+            <p class="text-xl font-bold">{{ $totalRequests }} demandes</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow">
-            <p class="text-gray-500 mb-2">Réservations confirmées</p>
-            <p class="text-xl font-bold">12 Appartements</p>
+            <p class="text-gray-500 mb-2">Appartements loués</p>
+            <p class="text-xl font-bold">{{ $rejectedBookings }} Appartements</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow">
-            <p class="text-gray-500 mb-2">Réservations refusées</p>
-            <p class="text-xl font-bold">8 Appartements</p>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow">
-            <p class="text-gray-500 mb-2">Réservations terminées</p>
-            <p class="text-xl font-bold">128 messages</p>
+            <p class="text-gray-500 mb-2"> Messages échangés</p>
+            <p class="text-xl font-bold">{{ $confirmedBookings }} Appartements</p>
         </div>
     </div>
 </section>
@@ -54,17 +50,26 @@
 <section class="container mx-auto mb-16">
     <h2 class="text-2xl font-semibold mb-6">Les dernières logements ajoutés</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition">
-            <img src="{{ asset('images/house1.jpg') }}" alt="Maison" class="w-full h-48 object-cover">
-            <div class="p-4">
-                <h3 class="font-semibold text-lg mb-2">Maison indépendante</h3>
-                <p class="text-green-600 font-bold">1100 DH / MOIS</p>
-                <p class="text-sm text-gray-500">Bni Bouayach</p>
-                <div class="mt-2 flex items-center">
-                    <span class="text-yellow-400">★★★★★</span>
+        @forelse($latestLogements as $annonce)
+            <div class="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition">
+                @if($annonce->logement && $annonce->logement->photos)
+                    @php $photos = $annonce->logement->photos @endphp
+                    <img src="{{ asset($photos[0] ?? 'images/default.jpg') }}" alt="Logement" class="w-full h-48 object-cover">
+                @else
+                    <img src="{{ asset('images/default.jpg') }}" alt="Logement" class="w-full h-48 object-cover">
+                @endif
+                <div class="p-4">
+                    <h3 class="font-semibold text-lg mb-2">{{ $annonce->titre_anno }}</h3>
+                    <p class="text-green-600 font-bold">{{ $annonce->logement->prix_log ?? 0 }} DH / MOIS</p>
+                    <p class="text-sm text-gray-500">{{ $annonce->logement->localisation_log ?? 'Non spécifié' }}</p>
+                    <div class="mt-2 flex items-center">
+                        <span class="text-yellow-400">★★★★★</span>
+                    </div>
                 </div>
             </div>
-        </div>
+        @empty
+            <p class="text-gray-500">Aucun logement disponible.</p>
+        @endforelse
     </div>
 </section>
 
@@ -100,22 +105,12 @@
 <!-- En quelques chiffres -->
 <section class="container mx-auto text-center mb-16">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div>
-            <p class="text-4xl font-bold">93</p>
-            <p class="text-gray-500">Logements gérés au Maroc</p>
-        </div>
-        <div>
-            <p class="text-4xl font-bold">1000</p>
-            <p class="text-gray-500">Jeunes loués</p>
-        </div>
-        <div>
-            <p class="text-4xl font-bold">800+</p>
-            <p class="text-gray-500">Utilisateurs actifs</p>
-        </div>
-        <div>
-            <p class="text-4xl font-bold">90+</p>
-            <p class="text-gray-500">Logements disponibles</p>
-        </div>
+        @foreach($stats as $stat)
+            <div>
+                <p class="text-4xl font-bold">{{ $stat['value'] }}</p>
+                <p class="text-gray-500">{{ $stat['label'] }}</p>
+            </div>
+        @endforeach
     </div>
 </section>
 

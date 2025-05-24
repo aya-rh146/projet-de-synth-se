@@ -37,4 +37,9 @@ class Annonce extends Model
     {
         return $this->hasMany(Favori::class);
     }
+
+    public function locataireDetails()
+    {
+        return $this->hasOne(AnnonceLocataire::class, 'annonce_id');
+    }
 }

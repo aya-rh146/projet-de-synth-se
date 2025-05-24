@@ -3,124 +3,225 @@
 namespace App\Http\Controllers\locataire;
 
 use Illuminate\Http\Request;
-use App\Models\Annonce;
 use App\Http\Controllers\Controller;
+use App\Models\Annonce;
+use App\Models\Logement;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AnnonceLocataireController extends Controller
 {
-    // ✅ Affichage des annonces
+    public function __construct()
+    {
+        $this->middleware('auth'); // التأكد من أن المستخدم متصل
+    }
+
+    // ✅ Affichage الإعلانات ديال المستأجر
     public function index()
     {
         try {
-            $annonces = Annonce::latest()->paginate(6);
+            $userId = Auth::user()->id;
+            if (Auth::user()->role_uti !== 'locataire') {
+                return redirect()->back()->with('error', 'Accès réservé aux locataires.');
+            }
+
+            $annonces = Annonce::with('logement')
+                ->where('proprietaire_id', $userId)
+                ->latest()
+                ->paginate(6);
+
             return view('locataire.annonceslocataire', compact('annonces'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur lors de la récupération des annonces: ' . $e->getMessage());
         }
     }
 
-    // ✅ Enregistrement d'une nouvelle annonce (avec AJAX support)
+    // ✅ Enregistrement إعلان جديد
     public function store(Request $request)
-{
-    $request->validate([
-        'titre_anno' => 'required|string|max:255',
-        'description_anno' => 'required|string',
-        'type_log' => 'required|in:studio,appartement,maison',
-        'prix_log' => 'required|numeric',
-        'ville' => 'required|string|max:255',
-        'nombre_colocataire_log' => 'required|integer|min:1',
-        'localisation_log' => 'required|string|max:255',
-    ]);
-    try {
-        $logement = new \App\Models\Logement();
-        $logement->prix_log = $request->prix_log;
-        $logement->localisation_log = $request->localisation_log;
-        $logement->date_creation_log = now();
-        $logement->type_log = $request->type_log;
-        $logement->nombre_colocataire_log = $request->nombre_colocataire_log;
-        $logement->ville = $request->ville;
-        dd($logement->toArray()); // هنا غادي تعرض البيانات قبل الـ save
+    {
+        $request->validate([
+            'titre_anno' => 'required|string|max:255',
+            'description_anno' => 'required|string',
+            'type_log' => 'required|in:studio,appartement,maison',
+            'prix_log' => 'required|numeric|min:0',
+            'ville' => 'required|string|max:255',
+            'nombre_colocataire_log' => 'required|integer|min:1',
+            'localisation_log' => 'required|string|max:255',
+        ]);
 
-        $logement->save();
+        try {
+            if (Auth::user()->role_uti !== 'locataire') {
+                return response()->json([
+                    'message' => 'Accès réservé aux locataires.',
+                    'success' => false,
+                ], 403);
+            }
 
-        $annonce = new Annonce();
-        $annonce->titre_anno = $request->titre_anno;
-        $annonce->description_anno = $request->description_anno;
-        $annonce->date_publication_anno = now();
-        $annonce->logement_id = $logement->id;
-        $annonce->proprietaire_id = auth()->id();
-        dd($annonce->toArray()); // هنا غادي تعرض البيانات قبل الـ save
+            $userId = Auth::user()->id;
+            if (!$userId) {
+                throw new \Exception('ID de l\'utilisateur non trouvé.');
+            }
 
-        $annonce->save();
+            // إنشاء logement جديد
+            $logement = new Logement();
+            $logement->prix_log = $request->prix_log;
+            $logement->localisation_log = $request->localisation_log;
+            $logement->date_creation_log = now();
+            $logement->type_log = $request->type_log;
+            $logement->nombre_colocataire_log = $request->nombre_colocataire_log;
+            $logement->ville = $request->ville;
+            $logement->photos = json_encode([]); // صور فارغة
+            $logement->save();
 
-        if ($request->ajax()) {
-            return response()->json([
-                'message' => 'Annonce créée avec succès.',
-                'annonce' => $annonce->load('logement'),
-            ]);
+            // إنشاء annonce جديد
+            $annonce = new Annonce();
+            $annonce->titre_anno = $request->titre_anno;
+            $annonce->description_anno = $request->description_anno;
+            $annonce->date_publication_anno = now();
+            $annonce->logement_id = $logement->id;
+            $annonce->proprietaire_id = $userId;
+            $annonce->statut_anno = 'disponible';
+            $annonce->save();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'message' => 'Annonce créée avec succès.',
+                    'success' => true,
+                    'annonce' => $annonce->load('logement'),
+                ], 200);
+            }
+
+            return redirect()->back()->with('success', 'Annonce créée avec succès.');
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'message' => 'Erreur lors de la création: ' . $e->getMessage(),
+                    'success' => false,
+                ], 500);
+            }
+            return redirect()->back()->with('error', 'Erreur lors de la création: ' . $e->getMessage());
         }
-        return redirect()->back()->with('success', 'Annonce créée avec succès.');
-    } catch (\Exception $e) {
-        dd($e->getMessage()); // هنا غادي تعرض الخطأ إذا كان فيه
-        if ($request->ajax()) {
-            return response()->json(['message' => 'Erreur serveur: ' . $e->getMessage()], 500);
-        }
-        return redirect()->back()->with('error', 'Erreur lors de la création: ' . $e->getMessage());
     }
-}
 
-
-    // ✅ Suppression d'annonce
+    // ✅ Suppression إعلان
     public function destroy($id)
     {
         try {
-            $annonce = Annonce::findOrFail($id);
-
-            // Sécurité : vérifier si l'annonce appartient à l'utilisateur connecté
-            if ($annonce->proprietaire_id !== auth()->id()) {
+            if (Auth::user()->role_uti !== 'locataire') {
                 return response()->json([
+                    'message' => 'Accès réservé aux locataires.',
                     'success' => false,
-                    'message' => "Vous n'avez pas le droit de supprimer cette annonce."
                 ], 403);
+            }
+
+            $annonce = Annonce::findOrFail($id);
+            $userId = Auth::user()->id;
+
+            if ($annonce->proprietaire_id !== $userId) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Vous n'avez pas le droit de supprimer cette annonce."
+                    ], 403);
+                }
+                return redirect()->back()->with('error', "Vous n'avez pas le droit de supprimer cette annonce.");
+            }
+
+            if ($annonce->logement && $annonce->logement->photos) {
+                $photos = json_decode($annonce->logement->photos, true);
+                if (!empty($photos)) {
+                    foreach ($photos as $photo) {
+                        Storage::disk('public')->delete($photo);
+                    }
+                }
+            }
+
+            if ($annonce->logement) {
+                $annonce->logement->delete();
             }
 
             $annonce->delete();
 
-            if (request()->ajax() || request()->wantsJson()) {
+            if (request()->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Annonce supprimée avec succès.'
-                ]);
+                ], 200);
             }
 
             return redirect()->back()->with('success', 'Annonce supprimée.');
         } catch (\Exception $e) {
-            if (request()->ajax() || request()->wantsJson()) {
+            if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Erreur lors de la suppression de l\'annonce.',
-                    'error' => $e->getMessage()
-                ], 422);
+                    'message' => 'Erreur lors de la suppression: ' . $e->getMessage(),
+                ], 500);
             }
-            return redirect()->back()->with('error', 'Erreur lors de la suppression de l\'annonce: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de la suppression: ' . $e->getMessage());
         }
     }
 
-    // ✅ Édition d'une annonce (retourne la vue d'édition)
+    // ✅ تعديل إعلان
     public function edit($id)
     {
         try {
-            $annonce = Annonce::findOrFail($id);
+            if (Auth::user()->role_uti !== 'locataire') {
+                return redirect()->back()->with('error', 'Accès réservé aux locataires.');
+            }
 
-            // Sécurité : s'assurer que c’est bien l’utilisateur qui possède l’annonce
-            if ($annonce->proprietaire_id !== auth()->id()) {
+            $annonce = Annonce::with('logement')->findOrFail($id);
+            $userId = Auth::user()->id;
+
+            if ($annonce->proprietaire_id !== $userId) {
                 return redirect()->back()->with('error', 'Accès non autorisé à cette annonce.');
             }
 
-            return view('locataire.editannonce', compact('annonce'));
+            return view('locataire.modifierannoncelocataire', compact('annonce'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur lors de la récupération de l\'annonce: ' . $e->getMessage());
         }
     }
-}
 
+    // ✅ تحديث إعلان
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'titre_anno' => 'required|string|max:255',
+            'description_anno' => 'required|string',
+            'type_log' => 'required|in:studio,appartement,maison',
+            'prix_log' => 'required|numeric|min:0',
+            'ville' => 'required|string|max:255',
+            'nombre_colocataire_log' => 'required|integer|min:1',
+            'localisation_log' => 'required|string|max:255',
+        ]);
+
+        try {
+            if (Auth::user()->role_uti !== 'locataire') {
+                return redirect()->back()->with('error', 'Accès réservé aux locataires.');
+            }
+
+            $annonce = Annonce::findOrFail($id);
+            $userId = Auth::user()->id;
+
+            if ($annonce->proprietaire_id !== $userId) {
+                return redirect()->back()->with('error', 'Accès non autorisé à cette annonce.');
+            }
+
+            $logement = $annonce->logement;
+            $logement->prix_log = $request->prix_log;
+            $logement->localisation_log = $request->localisation_log;
+            $logement->type_log = $request->type_log;
+            $logement->nombre_colocataire_log = $request->nombre_colocataire_log;
+            $logement->ville = $request->ville;
+            $logement->save();
+
+            $annonce->titre_anno = $request->titre_anno;
+            $annonce->description_anno = $request->description_anno;
+            $annonce->save();
+
+            return redirect()->route('locataire.annonceslocataire.index')->with('success', 'Annonce mise à jour avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la mise à jour: ' . $e->getMessage());
+        }
+    }
+}
